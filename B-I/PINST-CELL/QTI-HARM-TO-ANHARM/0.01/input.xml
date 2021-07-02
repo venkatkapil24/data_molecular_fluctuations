@@ -1,0 +1,47 @@
+<simulation verbosity='low'>
+  <output prefix='simulation'>
+    <properties stride='10' filename='out'>  [ step, time{picosecond}, conserved, temperature{kelvin}, kinetic_opsc, potential_opsc, pressure_md, volume ] </properties>
+    <properties stride='10' filename='pots'>  [ pot_component_raw(0;-2), pot_component_raw(1;-2), pot_component_raw(2;-2) ] </properties>
+    <checkpoint stride='1000' overwrite='true'/>
+  </output>
+  <total_steps>100000</total_steps>
+  <total_time> 86000 </total_time>
+  <prng>
+    <seed>31415</seed>
+  </prng>
+  <ffdebye name='debye'>
+    <hessian shape='(576,576)' mode='file'> ../hessian.data </hessian>
+    <x_reference mode='file'> ../ref.data  </x_reference>
+    <v_reference> -6.04125891e+02 </v_reference>
+  </ffdebye>
+  <ffsocket name='lammps-1' mode='unix'>
+    <address> qti_2_1 </address>
+  </ffsocket>
+  <ffsocket name='lammps-2' mode='unix'>
+    <address> qti_2_2 </address>
+  </ffsocket>
+  <system>
+    <initialize nbeads='64'>
+      <file mode='xyz'> ../init.xyz </file>
+      <velocities mode='thermal' units='kelvin'> 100 </velocities>
+    </initialize>
+    <forces>
+      <force forcefield='lammps-1' weight='0.010001'> </force>
+      <force forcefield='lammps-2' weight='0.010001'> </force>
+      <force forcefield='debye' weight='0.989999'> </force>
+    </forces>
+    <motion mode='dynamics'>
+      <dynamics mode='sc' splitting='baoab'>
+        <timestep units='femtosecond'> 1.00 </timestep>
+        <nmts> [4] </nmts>
+        <thermostat mode='pile_l'>
+          <tau units='femtosecond'> 1.00 </tau>
+          <pile_lambda> 0.10 </pile_lambda>
+        </thermostat>
+      </dynamics>
+    </motion>
+    <ensemble>
+      <temperature units='kelvin'> 100 </temperature>
+    </ensemble>
+  </system>
+</simulation>

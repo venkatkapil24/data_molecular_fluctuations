@@ -1,0 +1,33 @@
+<simulation verbosity="medium">
+  <output prefix='simulation'>
+    <properties filename='out' stride='1'> [step, time{picosecond}, conserved, temperature{kelvin}, kinetic_md, potential, pressure_md{megapascal}, volume ] </properties>
+    <properties filename='pot' stride='1' >  [ potential ] </properties>
+    <properties filename='vir' stride='1' >  [ virial_md, volume ] </properties>
+    <properties filename='cell' stride='1' >  [ cell_h, cell_abcABC ] </properties>
+    <trajectory filename='pos' stride='1'> positions </trajectory>
+     <checkpoint stride='100' overwrite='True'/>
+  </output>
+  <total_steps>100000</total_steps>
+  <total_time> 86000 </total_time>
+  <prng><seed>4441</seed></prng>
+  <ffsocket name="lammps-1" pbc="True" mode="unix"> 
+	  <address>replay-1</address>  <!--Replace with the ${HOSTNAME} of the node on which you run. Can be done with a simple sed operation. -->
+	  <port> 11111 </port> 
+  </ffsocket>
+  <ffsocket name="lammps-2" pbc="True" mode="unix"> 
+	  <address>replay-2</address>  <!--Replace with the ${HOSTNAME} of the node on which you run. Can be done with a simple sed operation. -->
+	  <port> 11111 </port> 
+  </ffsocket>
+  <system>
+    <initialize nbeads="1">
+      <file mode="xyz"> init.xyz </file>
+    </initialize>
+        <forces>
+          <force forcefield="lammps-1"> </force>
+          <force forcefield="lammps-2"> </force>
+        </forces>
+    <motion mode='replay'>
+        <file mode='xyz'> ../NPT/simulation.subset.xyz </file>
+    </motion>
+    </system>
+</simulation>

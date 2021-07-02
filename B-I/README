@@ -1,0 +1,237 @@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 1: Run a PI-NST simulation at the required temperature and pressure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step performs constant stress simulations that allows the cell of the
+system to equilibrate in a fully-flexible manner at the given temperature
+and pressure, while incorporating the quantum nature of nuclei. Since we
+use overconservative parameters for running PIMD simulations, the average
+cell obtained should be an exact estimate for the ML potential.
+
+``
+
+cd PINST-CELL/PINST
+
+i-pi input.xml > log.i-pi & 
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+``
+Note that you need to source the codes/i-pi/env.sh file to ensure the i-PI 
+executable is added to PATH. Also, feel free to replace lmp_mpi with your 
+LAMMPS executable.
+
+
+A simulations of ~ 20 ps is more than sufficient to yield an equilibrium
+cell. 
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 2: Optimize the structure with the average cell obtained from the PI-NST simulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step performs a fixed cell geometry optimization of a structure with the average
+cell obtained from the PI-NST simulation [Step 1]. This structure can be obtained by
+running the script:
+
+``
+cd PINST-CELL/GEOP/
+
+python get_average_cell.py ../PINST/simulation.pos_0.xyz ../../../structures/B-I.xyz > init.xyz
+
+``
+
+The geometry optimization can be performed as follows:
+
+``
+
+i-pi input.xml > log.i-pi &
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+``
+
+The trajectory of the optimization is saved as simulation.pos_0.xyz
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 3: Calculate the phonons of the optimized structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step calculates the phonons of the fixed cell geomerty optimized structure [Step 2].
+The optimized structure can be fetched from the optimization trajectory using the script:
+
+``
+
+cd PINST-CELL/HARM/
+
+bash get_optimized_pos.sh > init.xyz
+
+
+``
+
+The phonons calculation can be performed as follows:
+
+``
+
+i-pi input.xml > log.i-pi &
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+
+``
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 4: Perform the harmonic to anharmonic quantum thermodynamic integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step performs the simulations required to calculate the numerically exact 
+free energy difference between the harmonic and the anharmonic potential while
+including the quantum nature of the nuclei. To create the relevant folder 
+structure and to fetch the files that describe the harmonic potential, run the 
+script
+
+``
+
+cd PINST-CELL/QTI-HARM-TO-ANHARM/
+
+bash setup_qti_harm_to_anharm_delta.sh
+
+``
+
+This will automatically fetch the Hessian from the HARM directory, and also update
+the i-PI input to correctly parse the harmonic parameters. This will further create
+sub-directories corresponding to the "lambda" [Kirkwood coefficient] parameters as
+specified in the file LAMBDAS.
+
+
+To run simulations for all the "lambda" values
+
+``
+
+for x in */
+do
+
+i-pi input.xml > log.i-pi &
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+done
+
+``
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 5: Perform constant pressure PI simulations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step will perform a classical and PI NPT simulation required to compute
+the free energy difference between the Helmholtz free energy [obtained from 
+simulations in Step 4] and the Gibbs free energy, while including the quantum
+ nature of the nuclei, and to obtain configuration for the free energy 
+perturbation. These simulations can be performed as follows:
+
+
+``
+
+cd PINPT-CELL/PINPT/
+
+i-pi input.xml > log.i-pi &
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+cd ../../
+
+``
+
+
+``
+
+cd PINPT-CELL/NPT/
+
+i-pi input.xml > log.i-pi &
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+cd ../../
+
+``
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 6: Perform single point calculations for free energy perturbation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This step estimates ML potential energies of structures sampled from NPT
+simulations [Step 5]. The structures can be sampled from the NPT trajectory 
+with a "stride" using the script:
+
+``
+
+cd PINST-CELL/FEP-NPT/
+
+python get_traj_subset.py ../NPT/simulation.pos_0.xyz 100 > frames.xyz
+
+cd ../../
+
+
+cd PINST-CELL/FEP-DFT/
+
+python get_traj_subset.py ../NPT/simulation.pos_0.xyz 100 > frames.xyz
+
+cd ../../
+
+``
+
+The ML single point energies can be calculated for the "frames" using:
+
+``
+cd PINST-CELL/FEP-NPT/
+
+i-pi input.xml > log.i-pi &
+
+sleep 10
+
+lmp_mpi < in-1.lmp > log.lmp.1 &
+lmp_mpi < in-2.lmp > log.lmp.2 &
+
+
+cd ../../
+
+``
+
+Similarly, single point calculation using an ab initio potential can
+be estimated by updating the atomic positions in the AIMS and quantum 
+espresso inputs. 
+
+
+~~~~~~~~~~~~~~~~
+Step 7: Analysis
+~~~~~~~~~~~~~~~~
+
+This step performs the analysis to estimate the quantum anharmonic 
+free energy using the ML potential. This is done using the scrpt:
+
+``
+
+jupyter notebook get_free_energy.ipynb
+
+
+``

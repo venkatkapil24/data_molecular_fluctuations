@@ -1,0 +1,25 @@
+B-I.xyz           Benzene form I
+B-II.xyz          Benzene form II
+G-A.xyz           Glycine form alpha
+G-B.xyz           Glycine form beta
+G-G.xyz           Glycine form gamma
+S-A.xyz           Succinic acid alpha
+S-B.xyz           Succinic acid beta
+
+
+In order to conver the files  into an XYZ format
+read by i-PI use the script:
+
+``
+
+get_ipi_xyz_from_libatom_xyz.py B-I.xyz B-I-ipi.xyz
+get_ipi_xyz_from_libatom_xyz.py B-II.xyz B-II-ipi.xyz
+get_ipi_xyz_from_libatom_xyz.py G-A.xyz G-A-ipi.xyz
+get_ipi_xyz_from_libatom_xyz.py G-B.xyz G-B-ipi.xyz
+get_ipi_xyz_from_libatom_xyz.py G-G.xyz G-G-ipi.xyz
+get_ipi_xyz_from_libatom_xyz.py S-A.xyz S-A-ipi.xyz
+get_ipi_xyz_from_libatom_xyz.py S-B.xyz S-B-ipi.xyz
+
+
+``
+

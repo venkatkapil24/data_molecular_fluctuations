@@ -1,0 +1,20 @@
+set multiplot layout 2,3; 
+
+set xlabel "steps"
+
+set ylabel "hxx"
+p "simulation.cell" us ($0*10):1 w l t "DEEP"
+set ylabel "hyy"
+p "simulation.cell" us ($0*10):2 w l t "DEEP"
+set ylabel "hzz"
+p "simulation.cell" us ($0*10):3 w l t "DEEP"
+
+
+set ylabel "hxy"
+p "simulation.cell" us ($0*10):4 w l t "DEEP"
+set ylabel "hxz"
+p "simulation.cell" us ($0*10):5 w l t "DEEP"
+set ylabel "hyz"
+p "simulation.cell" us ($0*10):6 w l t "DEEP"
+
+
